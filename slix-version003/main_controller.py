@@ -87,8 +87,8 @@ class StreamToLogger(object):
             if line.strip():
                 self.logger.log(self.log_level, line.rstrip())
             
-    def flush(self):
-        pass
+    # def flush(self):
+    #     pass
 sys.stdout = StreamToLogger(root_logger, logging.INFO)
 sys.stderr = StreamToLogger(root_logger, logging.ERROR)
 
@@ -444,4 +444,5 @@ class SmartFarmController:
 
 if __name__ == "__main__":
     controller = SmartFarmController()
+
     controller.run()
