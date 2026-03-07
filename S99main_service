@@ -1,0 +1,25 @@
+#!/bin/sh
+
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
+PYTHON=/usr/bin/python3
+SCRIPT=/root/Main/main_controller.py
+LOG=/root/smartfarm.log
+
+case "$1" in
+  start)
+    echo "Starting Smart Farm Controller..."
+    sleep 5
+    cd /root/Main
+    $PYTHON $SCRIPT >> $LOG 2>&1 &
+    ;;
+  stop)
+    killall python3
+    ;;
+  restart)
+    $0 stop
+    sleep 2
+    $0 start
+    ;;
+esac
+
+exit 0
