@@ -83,13 +83,15 @@ class SensorWaterLevelRKL01:
             raw_value = int(level_high + level_low, 16)
 
             if raw_value < 0 or raw_value > 5000:
-                raise ValueError(f" raw_value ({raw_value}) Out of range (0 - 100000)")
-            
-            # Convert to water level in meters (divide by 100 as per manual)
-            # water_level = (raw_value / 10.0)- 42#42 คือค่าที่น้ำต่ำกว่าดินวัดจากตลับเมตรเป็นค่า offset
-            sensor_plant_height = 73  # Offset in cm (50 + 23 :50 คือโคนต้นถึงผิวน้ำ 23 คือระยะที่ sensor อยู่)
-            sensor_reading = (raw_value / 10.0)
-            water_level = (sensor_plant_height - sensor_reading)
+                print(f"Warning: raw_value ({raw_value}) out of range send value is 0")
+                water_level = 0
+            else:
+                sensor_plant_height = 73  # Offset in cm (50 + 23 :50 คือโคนต้นถึงผิวน้ำ 23 คือระยะที่ sensor อยู่)
+                sensor_reading = (raw_value / 10.0)
+                water_level = (sensor_plant_height - sensor_reading)
+                
+                if water_level < 0:
+                    water_level = 0
             
             result = {
                 "water_level": water_level,
