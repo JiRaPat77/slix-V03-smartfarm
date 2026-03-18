@@ -18,6 +18,7 @@ import os
 import signal
 import subprocess
 import logging
+import serial
 
 # --- Core Logging ---
 from logging.handlers import TimedRotatingFileHandler
@@ -163,6 +164,9 @@ class SmartFarmController:
      
         self.box_id = self.sys_config.get("control_box_id", "SLXA_UNKNOWN")
         self.serial_port = self.sys_config.get("serial_port", "/dev/ttyS2")
+        self.current_baudrate = None
+        self.master_serial = None
+        self._initialize_master_serial()
         self.net_interval = self.sys_config.get("internet_check_interval_sec", 10)
         self.read_interval = self.sys_config.get("read_interval_sec", 10)
         self.send_interval = self.sys_config.get("telemetry_send_interval_sec", 60)
@@ -211,6 +215,41 @@ class SmartFarmController:
                 print(f"Sensor Port {port} ({s_type}) Initialized.")
             else:
                 print(f"Unknown sensor type '{s_type}' at port {port}")
+
+    def _initialize_master_serial(self):
+        try:
+            self.master_serial = serial.Serial(
+                port=self.serial_port,
+                baudrate=9600,
+                timeout=1.5,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                bytesize=serial.EIGHTBITS
+            )
+            self.current_baudrate = 9600
+        except Exception as e:
+            print(f"Master Serial Init Error: {e}")
+
+    def _change_baudrate(self, new_baudrate):
+        if self.current_baudrate != new_baudrate and self.master_serial:
+            try:
+                self.master_serial.close()
+                self.master_serial = serial.Serial(
+                    port=self.serial_port,
+                    baudrate=new_baudrate,
+                    timeout=1.5,
+                    parity=serial.PARITY_NONE,
+                    stopbits=serial.STOPBITS_ONE,
+                    bytesize=serial.EIGHTBITS
+                )
+                self.current_baudrate = new_baudrate
+                print(f"Switched Baudrate to {new_baudrate}")
+                time.sleep(0.2)
+                return True
+            except Exception as e:
+                print(f"Failed to change baudrate to {new_baudrate}: {e}")
+                return False
+        return True
 
     def _read_sensor_data(self, s_type, instance):
         if s_type == "wind": return instance.read_wind()
@@ -272,7 +311,10 @@ class SmartFarmController:
                 s_type = s_info['type']
                 instance = s_info['sensor_obj']
                 
+                req_baudrate = s_info.get("baudrate", 9600)
+                
                 with self.rs485_lock:
+                    self._change_baudrate(req_baudrate)
                     time.sleep(0.05)
                     data = self._read_sensor_data(s_type, instance)
                 
