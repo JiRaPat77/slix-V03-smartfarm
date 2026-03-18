@@ -27,7 +27,9 @@ class SensorAirTempHumidityRS30:
             # Temperature
             temp_raw = int(parts[5] + parts[6], 16)
             temperature = self._parse_signed(temp_raw) / 10
-
+            
+            if (temperature < -30 or temperature > 70) or (humidity < 0 or humidity > 100):
+                raise ValueError(f"Sensor incorrect value (Temperature: {temperature}, Humidity: {humidity})")
             return {
                 "temperature": round(temperature, 1),
                 "humidity": round(humidity, 1)
